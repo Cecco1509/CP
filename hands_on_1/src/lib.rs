@@ -86,52 +86,48 @@ impl Tree {
 
     /// Checks if the tree is a Binary Search Tree
     pub fn is_bst(&self) -> bool {
-        self.rec_is_bst(0, true).0
+        self.rec_is_bst(0).0
     }
 
     /// Checks if the given subtree is a Binary Search Tree and returns the maximum or minimum value in the subtree.
-    /// 
-    /// # Parameters
-    /// * option - This boolean parameter specifies whether the returned key value should be 
-    /// the minimum or maximum of the subtree.
     ///
     /// # Returns
-    /// return values ( is_bst : bool, value_requested: Option<i32> )
-    /// value_requested refers to the value specified in parameter options
-    fn rec_is_bst(&self, node_id: usize, option: bool) -> (bool, i32) {
+    /// return values ( is_bst : bool, min_key: i32, max_key: i32)
+    fn rec_is_bst(&self, node_id: usize) -> (bool, i32, i32) {
         assert!(node_id < self.nodes.len(), "Node id is out of range");
             let node = &self.nodes[node_id];
 
-            let mut ret_key: i32 = node.key; // Stores the return key value
+            let mut min_key: i32 = node.key; // Stores the return min_key in the subtree
+            let mut max_key: i32 = node.key; // Stores the return max_key in the subtree
 
             // Checks if left_child.key < node.key < right_child.key. No need to go further if this is not valid.
             // Doing this we recorgnise invalid nodes before running recursion on the children
-            if node.id_left.is_some() && node.key < self.nodes[node.id_left.unwrap()].key {   return (false, -1); }
-            if node.id_right.is_some() && node.key > self.nodes[node.id_right.unwrap()].key { return (false, -1); }
+            if node.id_left.is_some() && node.key < self.nodes[node.id_left.unwrap()].key {   return (false, -1, -1); }
+            if node.id_right.is_some() && node.key > self.nodes[node.id_right.unwrap()].key { return (false, -1, -1); }
 
             if let Some(id_left) = node.id_left {
 
-                let left: (bool, i32) = self.rec_is_bst(id_left, true);
+                let left: (bool, i32, i32) = self.rec_is_bst(id_left);
 
-                if !left.0 { return (false, -1); }
+                if !left.0 { return (false, -1, -1); }
 
-                if left.1 > node.key { return (false, -1); }
+                if left.2 > node.key { return (false, -1, -1); }
 
-                if !option { ret_key = left.1; }
+                min_key = left.1;
             }
 
             if let Some(id_right) = node.id_right {
 
-                let right: (bool, i32) = self.rec_is_bst(id_right, false);
+                let right: (bool, i32, i32) = self.rec_is_bst(id_right);
 
-                if !right.0 { return (false, -1); }
+                if !right.0 { return (false, -1, -1); }
 
-                if right.1 < node.key  { return (false, -1); }
+                if right.1 < node.key  { return (false, -1, -1); }
                 
-                if option { ret_key = right.1 }
+                max_key = right.2;
             }
 
-            return (true, ret_key);
+            return (true, min_key, max_key);
     }
 
 
@@ -371,6 +367,84 @@ mod is_bst_tests {
         tree1.add_node(2, 31, false); // id 4
 
         assert_eq!(tree1.is_bst(), false);
+    }
+
+    #[test]
+    fn test9() {
+        let mut tree = Tree::with_root(10);
+
+        //         10
+        //       /    \
+        //      5     15
+        //    /  \
+        //   2   6
+        //  /     \
+        // 1      13
+        tree.add_node(0, 5, true); // id 1
+        tree.add_node(0, 11, false); // id 2
+        tree.add_node(1, 2, true); // id 3
+        tree.add_node(1, 6, false); // id 4
+        tree.add_node(3, 1, true); // id 5
+        tree.add_node(4, 13, false); // id 6
+
+        assert_eq!(tree.is_bst(), false);
+
+        let mut tree = Tree::with_root(10);
+
+        //         10
+        //       /    \
+        //      5     15
+        //    /  \
+        //   2   6
+        //  /     \
+        // 1      7
+        tree.add_node(0, 5, true); // id 1
+        tree.add_node(0, 11, false); // id 2
+        tree.add_node(1, 2, true); // id 3
+        tree.add_node(1, 6, false); // id 4
+        tree.add_node(3, 1, true); // id 5
+        tree.add_node(4, 7, false); // id 6
+
+        assert_eq!(tree.is_bst(), true);
+    }
+
+    #[test]
+    fn test10() {
+        let mut tree = Tree::with_root(10);
+
+        //         10
+        //       /    \
+        //      5     15
+        //           /  \
+        //         12   20
+        //         /     \
+        //        9      22
+        tree.add_node(0, 5, true); // id 1
+        tree.add_node(0, 15, false); // id 2
+        tree.add_node(2, 12, true); // id 3
+        tree.add_node(2, 20, false); // id 4
+        tree.add_node(3, 9, true); // id 5
+        tree.add_node(4, 22, false); // id 6
+
+        assert_eq!(tree.is_bst(), false);
+
+        let mut tree = Tree::with_root(10);
+
+        //         10
+        //       /    \
+        //      5     15
+        //           /  \
+        //         12   20
+        //         /     \
+        //        11      22
+        tree.add_node(0, 5, true); // id 1
+        tree.add_node(0, 15, false); // id 2
+        tree.add_node(2, 12, true); // id 3
+        tree.add_node(2, 20, false); // id 4
+        tree.add_node(3, 11, true); // id 5
+        tree.add_node(4, 22, false); // id 6
+
+        assert_eq!(tree.is_bst(), true);
     }
 }
 
