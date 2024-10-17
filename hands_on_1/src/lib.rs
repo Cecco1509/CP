@@ -98,64 +98,46 @@ impl Tree {
     /// # Returns
     /// return values ( is_bst : bool, value_requested: Option<i32> )
     /// value_requested refers to the value specified in parameter options
-    fn rec_is_bts(&self, node_id: Option<usize>, option: bool) -> (bool, Option<i32>) {
+    fn rec_is_bts(&self, node_id: Option<usize>, option: bool) -> (bool, i32) {
         if let Some(id) = node_id {
             assert!(id < self.nodes.len(), "Node id is out of range");
             let node = &self.nodes[id];
 
-            let mut ret_key: Option<i32> = None; // Stores the return key value
+            let mut ret_key: i32 = node.key; // Stores the return key value
 
             // Checks the value of the left child node 
             if let Some(id_left) = node.id_left {
                 if node.key < self.nodes[id_left].key {
-                    return (false, None);
+                    return (false, -1);
                 }
 
-                let left: (bool, Option<i32>) = self.rec_is_bts(node.id_left, true);
+                let left: (bool, i32) = self.rec_is_bts(node.id_left, true);
 
-                if !left.0 {
-                    return (false, None);
-                }
+                if !left.0 { return (false, -1); }
 
-                if let Some(key) = left.1 {
-                    if key > node.key {
-                        return (false, None);
-                    }
-                    if !option {
-                        ret_key = Some(key)
-                    }
-                }
+                if left.1 > node.key { return (false, -1); }
+
+                if !option { ret_key = left.1; }
             }
 
             if let Some(id_right) = node.id_right {
                 if node.key > self.nodes[id_right].key {
-                    return (false, None);
+                    return (false, -1);
                 }
 
-                let right: (bool, Option<i32>) = self.rec_is_bts(node.id_right, false);
+                let right: (bool, i32) = self.rec_is_bts(node.id_right, false);
 
-                if !right.0 {
-                    return (false, None);
-                }
+                if !right.0 { return (false, -1); }
 
-                if let Some(key) = right.1 {
-                    if key < node.key {
-                        return (false, None);
-                    }
-                    if option {
-                        ret_key = Some(key)
-                    }
-                }
+                if right.1 < node.key  { return (false, -1); }
+                
+                if option { ret_key = right.1 }
             }
 
-            if let Some(key) = ret_key {
-                return (true, Some(key));
-            }
-
-            return (true, Some(node.key));
+            return (true, ret_key);
         }
 
-        (false, None)
+        (false, -1)
     }
 
 
