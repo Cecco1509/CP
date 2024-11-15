@@ -4,35 +4,35 @@ use std::io::{self, BufRead, Error};
 use std::path::Path;
 fn main() {
     let tests: Vec<String> = vec![
-        //"./testset/input0.txt".to_string(),
-        //"./testset/input1.txt".to_string(),
-        //"./testset/input2.txt".to_string(),
-        //"./testset/input3.txt".to_string(),
-        //"./testset/input4.txt".to_string(),
+        "./testset/input0.txt".to_string(),
+        "./testset/input1.txt".to_string(),
+        "./testset/input2.txt".to_string(),
+        "./testset/input3.txt".to_string(),
+        "./testset/input4.txt".to_string(),
         "./testset/input5.txt".to_string(),
-        // "./testset/input6.txt".to_string(),
-        // "./testset/input7.txt".to_string(),
-        // "./testset/input8.txt".to_string(),
-        // "./testset/input9.txt".to_string(),
-        // "./testset/input10.txt".to_string(),
+        "./testset/input6.txt".to_string(),
+        "./testset/input7.txt".to_string(),
+        "./testset/input8.txt".to_string(),
+        "./testset/input9.txt".to_string(),
+        "./testset/input10.txt".to_string(),
     ];
 
     let output: Vec<String> = vec![
-        //"./testset/output0.txt".to_string(),
-        //"./testset/output1.txt".to_string(),
-        //"./testset/output2.txt".to_string(),
-        //"./testset/output3.txt".to_string(),
-        //"./testset/output4.txt".to_string(),
+        "./testset/output0.txt".to_string(),
+        "./testset/output1.txt".to_string(),
+        "./testset/output2.txt".to_string(),
+        "./testset/output3.txt".to_string(),
+        "./testset/output4.txt".to_string(),
         "./testset/output5.txt".to_string(),
-        // "./testset/output6.txt".to_string(),
-        // "./testset/output7.txt".to_string(),
-        // "./testset/output8.txt".to_string(),
-        // "./testset/output9.txt".to_string(),
-        // "./testset/output10.txt".to_string(),
+        "./testset/output6.txt".to_string(),
+        "./testset/output7.txt".to_string(),
+        "./testset/output8.txt".to_string(),
+        "./testset/output9.txt".to_string(),
+        "./testset/output10.txt".to_string(),
     ];
 
     for (i, test) in tests.iter().enumerate() {
-        println!("\n\n\n TEST {} \n", i);
+        println!("\n\n\nTEST {} \n", i);
         match file_reader(test.to_string(), output[i].to_string()) {
             Ok(_) => println!("Test case {} passed", test),
             Err(e) => println!("Test case {} failed: {}", test, e),
@@ -58,7 +58,7 @@ fn file_reader(input_path: String, output_path: String) -> io::Result<()> {
             .filter_map(|s| s.parse().ok())
             .collect();
 
-        println!("First line: {:?}", numbers);
+        //println!("First line: {:?}", numbers);
     } else {
         println!("The file is empty or the first line could not be read.");
     }
@@ -71,12 +71,16 @@ fn file_reader(input_path: String, output_path: String) -> io::Result<()> {
             .filter_map(|s| s.parse().ok())
             .collect();
 
-        println!("Array line: {:?}", numbers);
-        for i in 0..numbers.len() {
-            println!("[{}] -> {}", (i), numbers[i]);
-        }
+        //println!("Array line: {:?}", numbers);
+        // for i in 0..numbers.len() {
+        //     println!("[{}] -> {}", (i), numbers[i]);
+        // }
         min_max = MinMax::new(numbers);
         //min_max.print_tree();
+        // match min_max.validate_tree() {
+        //     Ok(_) => println!("Tree is valid!"),
+        //     Err(err) => println!("Tree validation failed: {}", err),
+        // }
     } else {
         println!("The file is empty or the first line could not be read.");
         return Err(Error::last_os_error());
@@ -102,10 +106,10 @@ fn file_reader(input_path: String, output_path: String) -> io::Result<()> {
         };
 
         if numbers.len() == 4 {
-            println!(
-                "update: % ## range: {} - {} ## T: {}",
-                numbers[1], numbers[2], numbers[3]
-            );
+            // println!(
+            //     "update: % ## range: {} - {} ## T: {}",
+            //     numbers[1], numbers[2], numbers[3]
+            // );
 
         } else {
 
@@ -119,8 +123,8 @@ fn file_reader(input_path: String, output_path: String) -> io::Result<()> {
                 wrong += 1;
                 println!(
                 "max   : {:?} ## range: {} - {}     ######### ( {} ) ######## -> {}",
-                result, numbers[1], numbers[2], (success == result.unwrap()), success
-            )
+                    result, numbers[1], numbers[2], (success == result.unwrap()), success
+                )
             }
 
             // println!(
@@ -132,5 +136,8 @@ fn file_reader(input_path: String, output_path: String) -> io::Result<()> {
 
     println!("TOT: {} right: {}, wrong: {}\n", right+wrong, right, wrong);
 
+    if wrong > 0 {
+        return Err(Error::new(io::ErrorKind::Other, "Test case failed"));
+    }
     Ok(())
 }
