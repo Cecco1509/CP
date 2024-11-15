@@ -12,14 +12,14 @@ impl Range {
 }
 
 pub struct RangeNode {
-    key: Option<i32>,
+    key: i32,
     range: Range,
     id_left: Option<usize>,
     id_right: Option<usize>,
 }
 
 impl RangeNode {
-    fn new(key: Option<i32>, range: Range) -> Self {
+    fn new(key: i32, range: Range) -> Self {
         Self {
             key,
             range,
@@ -60,7 +60,7 @@ fn tree_init(arr: &Vec<i32>, start: usize, end: usize, level: usize) -> (Vec<Lev
     if start == end {
         return (
             vec![LevelNode::new(
-                RangeNode::new(Some(arr[start]), Range::new(start, end)),
+                RangeNode::new(arr[start], Range::new(start, end)),
                 level,
             )],
             arr[start],
@@ -74,7 +74,7 @@ fn tree_init(arr: &Vec<i32>, start: usize, end: usize, level: usize) -> (Vec<Lev
 
     let mut ret_arr: Vec<LevelNode> = Vec::with_capacity((2 * left_seg_tree.len()) + 1);
     ret_arr.push(LevelNode::new(
-        RangeNode::new(Some(maximum), Range::new(start, end)),
+        RangeNode::new(maximum, Range::new(start, end)),
         level,
     ));
     merge(&left_seg_tree, &right_seg_tree, &mut ret_arr);
@@ -109,7 +109,7 @@ fn merge(left: &[LevelNode], right: &[LevelNode], merged_arr: &mut Vec<LevelNode
 
 impl MinMax {
 
-    /* Complexity = O(n log n) merge sort */
+    /* Complexity = O(n log n) used merge sort to build the tree merge sort*/
     pub fn new(arr: Vec<i32>) -> Self {
         let (ranges, _) = tree_init(&arr, 0, arr.len()-1, 0);
         let mut lazy_tree: Vec<Option<i32>> = Vec::with_capacity(ranges.len());
@@ -125,18 +125,9 @@ impl MinMax {
                 new_node.id_right = None;
                 nonode += 1;
             } else {
-                new_node.id_left =  Some(((i - nonode) * 2) + 1); //min(Some(((i) * 2) + 1), Some(ranges.len() - 2)); //
-                new_node.id_right = Some(((i - nonode) * 2) + 2);//min(Some(((i - nonode) * 2) + 2), Some(ranges.len() - 1)); //
+                new_node.id_left =  Some(((i - nonode) * 2) + 1);
+                new_node.id_right = Some(((i - nonode) * 2) + 2);
             }
-
-            //println!("pos: {} level: {} range{}-{} left:{:?} right{:?}", i, node.level, new_node.range.start, new_node.range.end, new_node.id_left, new_node.id_right);
-
-            let mut lazy_node = RangeNode::new(
-                None,
-                Range::new(node.range_node.range.start, node.range_node.range.end),
-            );
-            lazy_node.id_left = new_node.id_left;
-            lazy_node.id_right = new_node.id_right;
 
             seg_tree.push(new_node);
             lazy_tree.push(None);
@@ -166,7 +157,7 @@ impl MinMax {
             }
 
             if self.nodes[node].range.start >= start && self.nodes[node].range.end <= end {
-                return self.nodes[node].key;
+                return Some(self.nodes[node].key);
             }
 
             if self.nodes[node].range.start <= start || self.nodes[node].range.end >= end {
@@ -175,7 +166,7 @@ impl MinMax {
                 let max_right = self.max(start, end, self.nodes[node].id_right);
 
                 if max_left.is_none() && max_right.is_none() {
-                    return self.nodes[node].key;
+                    return Some(self.nodes[node].key);
                 }
 
                 if max_left.is_none() {
@@ -197,8 +188,8 @@ impl MinMax {
 
         if let Some(new_val) = self.lazy_nodes[node] {
 
-            if new_val <= self.nodes[node].key.unwrap() {
-                self.nodes[node].key = Some(new_val);
+            if new_val <= self.nodes[node].key {
+                self.nodes[node].key = new_val;
                 //println!("NODE UPDATED : {:?} to node {} range {}-{}", self.nodes[node].key, node, self.nodes[node].range.start, self.nodes[node].range.end);
 
                 self.propagate(node, new_val);
@@ -227,19 +218,19 @@ impl MinMax {
 
             // Nessuna sovrapposizione
             if self.nodes[node].range.start > end || self.nodes[node].range.end < start {
-                return self.nodes[node].key;
+                return Some(self.nodes[node].key);
             }
 
             // Sovrapposizione completa
             if self.nodes[node].range.start >= start && self.nodes[node].range.end <= end {
 
-                if self.nodes[node].key.unwrap() > t {
-                    self.nodes[node].key = Some(t);
+                if self.nodes[node].key > t {
+                    self.nodes[node].key = t;
                     //println!("ASSIGNED NODE : {} to node {} range {}-{}", t, node, self.nodes[node].range.start, self.nodes[node].range.end);
                     self.propagate(node, t);
                 }
 
-                return self.nodes[node].key;
+                return Some(self.nodes[node].key);
             }
 
             // Sovrapposizione parziale
@@ -248,12 +239,12 @@ impl MinMax {
                 let left_id = self.nodes[node].id_left;
                 let right_id = self.nodes[node].id_right;
 
-                let max_left = self.update(start, end, t, left_id);
-                let max_right = self.update(start, end, t, right_id);
+                let max_left = self.update(start, end, t, left_id).unwrap();
+                let max_right = self.update(start, end, t, right_id).unwrap();
 
-                let max: Option<i32> = std::cmp::max(max_left, max_right);
+                let max: i32 = std::cmp::max(max_left, max_right);
 
-                if max.unwrap() != self.nodes[node].key.unwrap() {
+                if max != self.nodes[node].key {
                     self.nodes[node].key = max;
                     /*println!("ASSIGNED NODE : {:?} to node {} range {}-{} comparing -> {}-{}({}) & {}-{}({})",
                         max, 
@@ -268,7 +259,7 @@ impl MinMax {
                         max_right.unwrap());*/
                 }
 
-                return self.nodes[node].key;
+                return Some(self.nodes[node].key);
             }
         }
 
@@ -294,7 +285,7 @@ impl MinMax {
                 "{} {} - {}, range = {}-{} pos: {} left: {:?} && right: {:?}",
                 "    ".repeat(depth*2),
                 depth,
-                node.key.unwrap(),
+                node.key,
                 node.range.start,
                 node.range.end,
                 node_index,
@@ -376,20 +367,82 @@ impl MinMax {
             }
     
             // Validate key (optional)
-            if let Some(key) = node.key {
-                let left_key = node.id_left;
-                let right_key = node.id_right;
-                if left_key.is_some() { 
-                    if key != max(self.nodes[left_key.unwrap()].key, self.nodes[right_key.unwrap()].key).unwrap() {
-                        return Err(format!(
-                            "Node {}: Key {} does not match the max coming from keys ({} , {}).",
-                            index, key, left_key.unwrap(), right_key.unwrap()
-                        ));
-                    }
+            let left_key = node.id_left;
+            let right_key = node.id_right;
+            if left_key.is_some() { 
+                if node.key != max(self.nodes[left_key.unwrap()].key, self.nodes[right_key.unwrap()].key) {
+                    return Err(format!(
+                        "Node {}: Key {} does not match the max coming from keys ({} , {}).",
+                        index, node.key, left_key.unwrap(), right_key.unwrap()
+                    ));
                 }
             }
         }
         Ok(())
     }
-    
+}
+
+
+
+pub struct IsThere{
+    nodes: Vec<RangeNode>,
+    lazy_nodes: Vec<Option<i32>>
+}
+
+fn tree_init_zero(start: usize, end: usize, level: usize) -> Vec<LevelNode> {
+    if start == end {
+        return 
+            vec![LevelNode::new(
+                RangeNode::new(0, Range::new(start, end)),
+                level,
+            )];
+    }
+
+    let mid = (start + end) / 2;
+    let left_seg_tree = tree_init_zero(start, mid, level + 1);
+    let right_seg_tree = tree_init_zero(mid + 1, end, level + 1);
+
+    let mut ret_arr: Vec<LevelNode> = Vec::with_capacity((2 * left_seg_tree.len()) + 1);
+    ret_arr.push(LevelNode::new(
+        RangeNode::new(0, Range::new(start, end)),
+        level,
+    ));
+    merge(&left_seg_tree, &right_seg_tree, &mut ret_arr);
+
+    ret_arr
+}
+
+
+impl IsThere {
+
+    fn new(intervals: i32) -> Self {
+
+        let ranges = tree_init_zero(0, (intervals as usize)-1, 0);
+        let mut lazy_tree: Vec<Option<i32>> = Vec::with_capacity(ranges.len());
+        let mut seg_tree: Vec<RangeNode> = Vec::with_capacity(ranges.len());
+
+        let mut nonode = 0;
+
+        for (i, node) in ranges.iter().enumerate() {
+            let mut new_node = node.range_node.clone_node();
+
+            if new_node.range.end - new_node.range.start == 0 {
+                new_node.id_left = None;
+                new_node.id_right = None;
+                nonode += 1;
+            } else {
+                new_node.id_left =  Some(((i - nonode) * 2) + 1);
+                new_node.id_right = Some(((i - nonode) * 2) + 2);
+            }
+
+            seg_tree.push(new_node);
+            lazy_tree.push(None);
+        }
+
+        Self {
+            nodes: seg_tree,
+            lazy_nodes: lazy_tree,
+        }
+
+    }
 }

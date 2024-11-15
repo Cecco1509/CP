@@ -4,31 +4,31 @@ use std::io::{self, BufRead, Error};
 use std::path::Path;
 fn main() {
     let tests: Vec<String> = vec![
-        "./testset/input0.txt".to_string(),
-        "./testset/input1.txt".to_string(),
-        "./testset/input2.txt".to_string(),
-        "./testset/input3.txt".to_string(),
-        "./testset/input4.txt".to_string(),
-        "./testset/input5.txt".to_string(),
-        "./testset/input6.txt".to_string(),
-        "./testset/input7.txt".to_string(),
-        "./testset/input8.txt".to_string(),
-        "./testset/input9.txt".to_string(),
-        "./testset/input10.txt".to_string(),
+        "./testset1/input0.txt".to_string(),
+        "./testset1/input1.txt".to_string(),
+        "./testset1/input2.txt".to_string(),
+        "./testset1/input3.txt".to_string(),
+        "./testset1/input4.txt".to_string(),
+        "./testset1/input5.txt".to_string(),
+        "./testset1/input6.txt".to_string(),
+        "./testset1/input7.txt".to_string(),
+        "./testset1/input8.txt".to_string(),
+        "./testset1/input9.txt".to_string(),
+        "./testset1/input10.txt".to_string(),
     ];
 
     let output: Vec<String> = vec![
-        "./testset/output0.txt".to_string(),
-        "./testset/output1.txt".to_string(),
-        "./testset/output2.txt".to_string(),
-        "./testset/output3.txt".to_string(),
-        "./testset/output4.txt".to_string(),
-        "./testset/output5.txt".to_string(),
-        "./testset/output6.txt".to_string(),
-        "./testset/output7.txt".to_string(),
-        "./testset/output8.txt".to_string(),
-        "./testset/output9.txt".to_string(),
-        "./testset/output10.txt".to_string(),
+        "./testset1/output0.txt".to_string(),
+        "./testset1/output1.txt".to_string(),
+        "./testset1/output2.txt".to_string(),
+        "./testset1/output3.txt".to_string(),
+        "./testset1/output4.txt".to_string(),
+        "./testset1/output5.txt".to_string(),
+        "./testset1/output6.txt".to_string(),
+        "./testset1/output7.txt".to_string(),
+        "./testset1/output8.txt".to_string(),
+        "./testset1/output9.txt".to_string(),
+        "./testset1/output10.txt".to_string(),
     ];
 
     for (i, test) in tests.iter().enumerate() {
