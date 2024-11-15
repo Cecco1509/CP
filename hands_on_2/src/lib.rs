@@ -1,4 +1,4 @@
-use std::cmp::max;
+use std::cmp::{max, min};
 
 pub struct Range {
     start: usize,
@@ -18,7 +18,7 @@ pub struct RangeNode {
     id_right: Option<usize>,
 }
 
-impl RangeNode  {
+impl RangeNode {
     fn new(key: Option<i32>, range: Range) -> Self {
         Self {
             key,
@@ -123,12 +123,12 @@ impl MinMax {
         for (i, node) in ranges.iter().enumerate() {
             let mut new_node = node.range_node.clone_node();
 
-            if (i * 2 + 2) > ranges.len() {
+            if new_node.range.end - new_node.range.start == 0 {
                 new_node.id_left = None;
                 new_node.id_right = None
             } else {
-                new_node.id_left = Some((i * 2) + 1);
-                new_node.id_right = Some((i * 2) + 2);
+                new_node.id_left = min(Some((i * 2) + 1), Some(ranges.len() - 2));
+                new_node.id_right = min(Some((i * 2) + 2), Some(ranges.len() - 1));
             }
 
             let mut lazy_node = RangeNode::new(
@@ -150,37 +150,26 @@ impl MinMax {
 
     pub fn query(&mut self, query: usize, start: usize, end: usize, t: i32) -> Option<i32> {
         if query == 0 {
-            return self.update(start - 1, end - 1, t, Some(0));
+            self.update(start - 1, end - 1, t, Some(0));
         }
         self.max(start - 1, end - 1, Some(0))
     }
 
     fn max(&mut self, start: usize, end: usize, node: Option<usize>) -> Option<i32> {
         if let Some(node) = node {
+            
+            self.update_node(node);
+            
             if self.nodes[node].range.start > end || self.nodes[node].range.end < start {
                 return None;
             }
 
             if self.nodes[node].range.start >= start && self.nodes[node].range.end <= end {
-
-                if self.lazy_nodes[node].key.is_some() {
-                    self.nodes[node].key = self.lazy_nodes[node].key;
-
-                    if let Some(id_left) = self.nodes[node].id_left {
-                        self.lazy_nodes[id_left].key = self.lazy_nodes[node].key;
-                    }
-
-                    if let Some(id_right) = self.nodes[node].id_right {
-                        self.lazy_nodes[id_right].key = self.lazy_nodes[node].key;
-                    }
-
-                    self.lazy_nodes[node].key = None;
-                }
-
                 return self.nodes[node].key;
             }
 
             if self.nodes[node].range.start <= start || self.nodes[node].range.end >= end {
+
                 let max_left = self.max(start, end, self.nodes[node].id_left);
                 let max_right = self.max(start, end, self.nodes[node].id_right);
 
@@ -197,70 +186,99 @@ impl MinMax {
                 }
 
                 return std::cmp::max(max_left, max_right);
-
             }
         }
 
         None
     }
 
-    fn update(&mut self, start: usize, end: usize, t: i32, node: Option<usize>) -> Option<i32> {
+    fn update_node(&mut self, node: usize) {
 
+        if let Some(new_val) = self.lazy_nodes[node].key {
+
+            if new_val <= self.nodes[node].key.unwrap() {
+                self.nodes[node].key = Some(new_val);
+                println!("NODE UPDATED : {:?} to node {} range {}-{}", self.nodes[node].key, node, self.nodes[node].range.start, self.nodes[node].range.end);
+
+                self.propagate(node, new_val);
+
+                self.lazy_nodes[node].key = None;
+            }
+
+        }
+
+    }
+
+    fn propagate(&mut self, node: usize, t:i32) {
+        if self.nodes[node].id_left.is_none() { return; }
+
+        let left_id = self.nodes[node].id_left.unwrap();
+        let right_id = self.nodes[node].id_right.unwrap();
+
+        self.lazy_nodes[left_id].key = Some(t);
+        self.lazy_nodes[right_id].key = Some(t);
+    }
+
+    fn update(&mut self, start: usize, end: usize, t: i32, node: Option<usize>) -> Option<i32> {
         if let Some(node) = node {
 
             // Nessuna sovrapposizione
             if self.nodes[node].range.start > end || self.nodes[node].range.end < start {
-                return None;
+                self.update_node(node);
+                return self.nodes[node].key;
             }
 
             // Sovrapposizione completa
             if self.nodes[node].range.start >= start && self.nodes[node].range.end <= end {
-                
-                if self.lazy_nodes[node].key.is_some() {
 
-                    if self.lazy_nodes[node].key.unwrap() < t { 
-                        return self.nodes[node].key;
-                    }
-                        
-                    self.lazy_nodes[node].key = Some(t);
-                    
-
-                }else {
-
-                    if self.nodes[node].key.unwrap() < t { 
-                        return self.nodes[node].key;
-                    }
-
-                    self.lazy_nodes[node].key = Some(t);
-
+                if self.lazy_nodes[node].key.is_none() && self.nodes[node].key.unwrap() <= t {
+                    return self.nodes[node].key;
                 }
-                
-                return self.lazy_nodes[node].key;
+
+                if self.lazy_nodes[node].key.is_some() {
+                    if self.lazy_nodes[node].key.unwrap() > t {
+                        self.lazy_nodes[node].key = Some(t);
+                    }
+                    self.nodes[node].key = self.lazy_nodes[node].key;
+                    println!("ASSIGNED NODE : {} to node {} range {}-{}", t, node, self.lazy_nodes[node].range.start, self.lazy_nodes[node].range.end);
+                    self.propagate(node, self.nodes[node].key.unwrap());
+                }else{
+                    if self.nodes[node].key.unwrap() > t {
+                        self.nodes[node].key = Some(t);
+                        println!("ASSIGNED NODE : {} to node {} range {}-{}", t, node, self.lazy_nodes[node].range.start, self.lazy_nodes[node].range.end);
+                        self.propagate(node, t);
+                    }
+                }
+
+                return self.nodes[node].key;
             }
 
             // Sovrapposizione parziale
             if self.nodes[node].range.start <= start || self.nodes[node].range.end >= end {
-                let max_left = self.update(start, end, t, self.nodes[node].id_left);
-                let max_right = self.update(start, end, t, self.nodes[node].id_right);
 
-                if max_left.is_none() && max_right.is_none() {
-                    print!("HEY");
-                    return self.nodes[node].key;
-                }
+                self.update_node(node);
 
-                let max: Option<i32> ;
+                let left_id = self.lazy_nodes[node].id_left;
+                let right_id = self.lazy_nodes[node].id_right;
 
-                if max_left.is_none() {
-                    max = max_right;
-                } else if max_right.is_none() {
-                    max = max_left;
-                }else{
-                    max = std::cmp::max(max_left, max_right);
-                }
+                let max_left = self.update(start, end, t, left_id);
+                let max_right = self.update(start, end, t, right_id);
+
+                let max: Option<i32> = std::cmp::max(max_left, max_right);
 
                 if max.unwrap() != self.nodes[node].key.unwrap() {
-                    self.lazy_nodes[node].key = max;
-                    return self.lazy_nodes[node].key;
+                    self.nodes[node].key = max;
+                    println!("ASSIGNED NODE : {:?} to node {} range {}-{} comparing -> {}-{}({}) & {}-{}({})",
+                        max, 
+                        node,
+                        self.lazy_nodes[node].range.start,
+                        self.lazy_nodes[node].range.end,
+                        self.lazy_nodes[left_id.unwrap()].range.start,
+                        self.lazy_nodes[left_id.unwrap()].range.end,
+                        max_left.unwrap(),
+                        self.lazy_nodes[right_id.unwrap()].range.start,
+                        self.lazy_nodes[right_id.unwrap()].range.end,
+                        max_right.unwrap());
                 }
 
                 return self.nodes[node].key;
@@ -271,11 +289,67 @@ impl MinMax {
     }
 
     pub fn print_tree(&self) {
-        for (i, node) in self.nodes.iter().enumerate() {
+        if self.nodes.is_empty() {
+            println!("Tree is empty.");
+        } else {
+            println!("!!!SEGTREE!!!");
+            self.print_node(0, 0);
+            println!("!!!LAZYTREE!!!");
+            self.print_lazy_node(0, 0);
+        }
+    }
+
+    // Recursive helper function to print each node and its children
+    fn print_node(&self, node_index: usize, depth: usize) {
+        if let Some(node) = self.nodes.get(node_index) {
+            // Print the current node with the label and indentation
             println!(
-                "Node: {}, Range: ({}, {}), max: {}, left: {:?}, right: {:?}",
-                i, node.range.start, node.range.end, node.key.unwrap(), node.id_left, node.id_right
+                "\n{} {} - {}, range = {}-{} pos: {} left: {:?} && right: {:?}",
+                "    ".repeat(depth*2),
+                depth,
+                node.key.unwrap(),
+                node.range.start,
+                node.range.end,
+                node_index,
+                node.id_left,
+                node.id_right
             );
+
+            // Print the left child with label "Child1" or "GrandchildX" based on depth
+            if let Some(left_index) = node.id_left {
+                self.print_node(left_index , depth + 1);
+            }
+
+            // Print the right child with label "Child2" or "GrandchildX" based on depth
+            if let Some(right_index) = node.id_right {
+                self.print_node(right_index, depth + 1);
+            }
+        }
+    }
+
+    fn print_lazy_node(&self, node_index: usize, depth: usize) {
+        if let Some(node) = self.lazy_nodes.get(node_index) {
+            // Print the current node with the label and indentation
+            println!(
+                "{}- {:?}, range = {}-{} pos: {} left:{:?} & right:{:?}",
+                "    ".repeat(depth),
+                node.key,
+                node.range.start,
+                node.range.end,
+                node_index,
+                node.id_left,
+                node.id_right
+            );
+
+            // Print the left child with label "Child1" or "GrandchildX" based on depth
+            if let Some(left_index) = node.id_left {
+                self.print_lazy_node(left_index , depth + 1);
+            }
+
+            // Print the right child with label "Child2" or "GrandchildX" based on depth
+            if let Some(right_index) = node.id_right {
+                self.print_lazy_node(right_index, depth + 1);
+            }
         }
     }
 }
