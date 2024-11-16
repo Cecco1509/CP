@@ -1,9 +1,9 @@
-use hands_on_2::MinMax;
+use hands_on_2::{IsThere, MinMax};
 use std::fs::File;
 use std::io::{self, BufRead, Error};
 use std::path::Path;
 fn main() {
-    let tests: Vec<String> = vec![
+    let tests1: Vec<String> = vec![
         "./testset1/input0.txt".to_string(),
         "./testset1/input1.txt".to_string(),
         "./testset1/input2.txt".to_string(),
@@ -17,7 +17,7 @@ fn main() {
         "./testset1/input10.txt".to_string(),
     ];
 
-    let output: Vec<String> = vec![
+    let output1: Vec<String> = vec![
         "./testset1/output0.txt".to_string(),
         "./testset1/output1.txt".to_string(),
         "./testset1/output2.txt".to_string(),
@@ -31,16 +31,48 @@ fn main() {
         "./testset1/output10.txt".to_string(),
     ];
 
-    for (i, test) in tests.iter().enumerate() {
-        println!("\n\n\nTEST {} \n", i);
-        match file_reader(test.to_string(), output[i].to_string()) {
+    let tests2: Vec<String> = vec![
+        "./testset2/input0.txt".to_string(),
+        "./testset2/input1.txt".to_string(),
+        "./testset2/input2.txt".to_string(),
+        "./testset2/input3.txt".to_string(),
+         "./testset2/input4.txt".to_string(),
+        "./testset2/input5.txt".to_string(),
+        "./testset2/input6.txt".to_string(),
+        "./testset2/input7.txt".to_string(),
+    ];
+
+    let output2: Vec<String> = vec![
+        "./testset2/output0.txt".to_string(),
+        "./testset2/output1.txt".to_string(),
+        "./testset2/output2.txt".to_string(),
+        "./testset2/output3.txt".to_string(),
+        "./testset2/output4.txt".to_string(),
+        "./testset2/output5.txt".to_string(),
+        "./testset2/output6.txt".to_string(),
+        "./testset2/output7.txt".to_string(),
+    ];
+
+    println!("TESTSET 1");
+    for (i, test) in tests1.iter().enumerate() {
+        //println!("\n\n\nTEST {} \n", i);
+        match file_reader_p1(test.to_string(), output1[i].to_string()) {
+            Ok(_) => println!("Test case {} passed", test),
+            Err(e) => println!("Test case {} failed: {}", test, e),
+        }
+    }
+
+    println!("\nTESTSET 2");
+    for (i, test) in tests2.iter().enumerate() {
+        //println!("\n\n\nTEST {} \n", i);
+        match file_reader_p2(test.to_string(), output2[i].to_string()) {
             Ok(_) => println!("Test case {} passed", test),
             Err(e) => println!("Test case {} failed: {}", test, e),
         }
     }
 }
 
-fn file_reader(input_path: String, output_path: String) -> io::Result<()> {
+fn file_reader_p1(input_path: String, output_path: String) -> io::Result<()> {
     if !Path::new(&input_path).exists() && !Path::new(&output_path).exists() {
         println!("File {} not found", input_path);
         return Ok(());
@@ -134,7 +166,97 @@ fn file_reader(input_path: String, output_path: String) -> io::Result<()> {
         }
     }
 
-    println!("TOT: {} right: {}, wrong: {}\n", right+wrong, right, wrong);
+    //println!("TOT: {} right: {}, wrong: {}\n", right+wrong, right, wrong);
+
+    if wrong > 0 {
+        return Err(Error::new(io::ErrorKind::Other, "Test case failed"));
+    }
+    Ok(())
+}
+
+fn file_reader_p2(input_path: String, output_path: String) -> io::Result<()> {
+    if !Path::new(&input_path).exists() && !Path::new(&output_path).exists() {
+        println!("File {} not found", input_path);
+        return Ok(());
+    }
+
+    let input_file = File::open(input_path)?;
+    let output_file: File = File::open(output_path)?;
+    let mut input_reader = io::BufReader::new(input_file);
+    let mut output_reader = io::BufReader::new(output_file);
+
+    let mut first_line = String::new();
+    let mut is_there: IsThere;
+    if input_reader.read_line(&mut first_line)? > 0 {
+        let numbers: Vec<i32> = first_line
+            .split_whitespace()
+            .filter_map(|s| s.parse().ok())
+            .collect();
+
+        //println!("Interval: {}", numbers[0]);
+        is_there = IsThere::new(numbers[0] as u128);
+    } else {
+        println!("The file is empty or the first line could not be read.");
+        return Err(Error::last_os_error());
+    }
+
+    let mut right: i32 = 0;
+    let mut wrong: i32 = 0;
+
+    for line in input_reader.lines() {
+        let line = line?;
+
+        let numbers: Vec<i32> = line
+            .split_whitespace()
+            .filter_map(|s| s.parse().ok())
+            .collect();
+
+        let result: i8 = if numbers.len() == 2 {
+            let r= is_there.query(0, numbers[0] as usize, numbers[1] as usize, 0);
+            //is_there.print_tree();
+            r
+        } else {
+            is_there.query(
+                1,
+                numbers[0] as usize,
+                numbers[1] as usize,
+                numbers[2] as u128,
+            )
+        };
+
+        if numbers.len() == 2 {
+            // println!(
+            //     "update: % ## range: {} - {} ## T: {}",
+            //     numbers[1], numbers[2], numbers[3]
+            // );
+        } else {
+            let mut output = String::new();
+            let _ = output_reader.read_line(&mut output);
+            let success: i8 = output.trim().parse().ok().unwrap();
+
+            if success == result {
+                right += 1;
+            } else {
+                wrong += 1;
+                println!(
+                    "max   : {:?} ## range: {} - {}     ######### ( FALSE ) ######## -> {}",
+                    result, numbers[0], numbers[1], success
+                )
+            }
+
+            // println!(
+            //     "max   : {:?} ## range: {} - {}     ######### ( {} ) ######## -> {}",
+            //     result, numbers[1], numbers[2], (success == result.unwrap()), success
+            // )
+        }
+    }
+
+    // println!(
+    //     "TOT: {} right: {}, wrong: {}\n",
+    //     right + wrong,
+    //     right,
+    //     wrong
+    // );
 
     if wrong > 0 {
         return Err(Error::new(io::ErrorKind::Other, "Test case failed"));

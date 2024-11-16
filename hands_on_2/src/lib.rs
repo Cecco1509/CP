@@ -1,4 +1,7 @@
-use std::cmp::{max, min};
+use std::{
+    cmp::max,
+    u128,
+};
 
 pub struct Range {
     start: usize,
@@ -108,10 +111,9 @@ fn merge(left: &[LevelNode], right: &[LevelNode], merged_arr: &mut Vec<LevelNode
 }
 
 impl MinMax {
-
     /* Complexity = O(n log n) used merge sort to build the tree merge sort*/
     pub fn new(arr: Vec<i32>) -> Self {
-        let (ranges, _) = tree_init(&arr, 0, arr.len()-1, 0);
+        let (ranges, _) = tree_init(&arr, 0, arr.len() - 1, 0);
         let mut lazy_tree: Vec<Option<i32>> = Vec::with_capacity(ranges.len());
         let mut seg_tree: Vec<RangeNode> = Vec::with_capacity(ranges.len());
 
@@ -125,7 +127,7 @@ impl MinMax {
                 new_node.id_right = None;
                 nonode += 1;
             } else {
-                new_node.id_left =  Some(((i - nonode) * 2) + 1);
+                new_node.id_left = Some(((i - nonode) * 2) + 1);
                 new_node.id_right = Some(((i - nonode) * 2) + 2);
             }
 
@@ -139,7 +141,7 @@ impl MinMax {
         }
     }
 
-    /* complexity of one query O(log n), total queries m -> O(m * log n) total complexity O((n + m) * log n) */ 
+    /* complexity of one query O(log n), total queries m -> O(m * log n) total complexity O((n + m) * log n) */
     pub fn query(&mut self, query: usize, start: usize, end: usize, t: i32) -> Option<i32> {
         if query == 0 {
             self.update(start - 1, end - 1, t, Some(0));
@@ -149,9 +151,8 @@ impl MinMax {
 
     fn max(&mut self, start: usize, end: usize, node: Option<usize>) -> Option<i32> {
         if let Some(node) = node {
-            
             self.update_node(node);
-            
+
             if self.nodes[node].range.start > end || self.nodes[node].range.end < start {
                 return None;
             }
@@ -161,7 +162,6 @@ impl MinMax {
             }
 
             if self.nodes[node].range.start <= start || self.nodes[node].range.end >= end {
-
                 let max_left = self.max(start, end, self.nodes[node].id_left);
                 let max_right = self.max(start, end, self.nodes[node].id_right);
 
@@ -185,24 +185,21 @@ impl MinMax {
     }
 
     fn update_node(&mut self, node: usize) {
-
         if let Some(new_val) = self.lazy_nodes[node] {
-
             if new_val <= self.nodes[node].key {
                 self.nodes[node].key = new_val;
-                //println!("NODE UPDATED : {:?} to node {} range {}-{}", self.nodes[node].key, node, self.nodes[node].range.start, self.nodes[node].range.end);
 
                 self.propagate(node, new_val);
 
                 self.lazy_nodes[node] = None;
             }
-
         }
-
     }
 
-    fn propagate(&mut self, node: usize, t:i32) {
-        if self.nodes[node].id_left.is_none() { return; }
+    fn propagate(&mut self, node: usize, t: i32) {
+        if self.nodes[node].id_left.is_none() {
+            return;
+        }
 
         let left_id = self.nodes[node].id_left.unwrap();
         let right_id = self.nodes[node].id_right.unwrap();
@@ -213,7 +210,6 @@ impl MinMax {
 
     fn update(&mut self, start: usize, end: usize, t: i32, node: Option<usize>) -> Option<i32> {
         if let Some(node) = node {
-
             self.update_node(node);
 
             // Nessuna sovrapposizione
@@ -223,10 +219,8 @@ impl MinMax {
 
             // Sovrapposizione completa
             if self.nodes[node].range.start >= start && self.nodes[node].range.end <= end {
-
                 if self.nodes[node].key > t {
                     self.nodes[node].key = t;
-                    //println!("ASSIGNED NODE : {} to node {} range {}-{}", t, node, self.nodes[node].range.start, self.nodes[node].range.end);
                     self.propagate(node, t);
                 }
 
@@ -235,7 +229,6 @@ impl MinMax {
 
             // Sovrapposizione parziale
             if self.nodes[node].range.start <= start || self.nodes[node].range.end >= end {
-
                 let left_id = self.nodes[node].id_left;
                 let right_id = self.nodes[node].id_right;
 
@@ -246,17 +239,6 @@ impl MinMax {
 
                 if max != self.nodes[node].key {
                     self.nodes[node].key = max;
-                    /*println!("ASSIGNED NODE : {:?} to node {} range {}-{} comparing -> {}-{}({}) & {}-{}({})",
-                        max, 
-                        node,
-                        self.nodes[node].range.start,
-                        self.nodes[node].range.end,
-                        self.nodes[left_id.unwrap()].range.start,
-                        self.nodes[left_id.unwrap()].range.end,
-                        max_left.unwrap(),
-                        self.nodes[right_id.unwrap()].range.start,
-                        self.nodes[right_id.unwrap()].range.end,
-                        max_right.unwrap());*/
                 }
 
                 return Some(self.nodes[node].key);
@@ -266,136 +248,19 @@ impl MinMax {
         None
     }
 
-    pub fn print_tree(&self) {
-        if self.nodes.is_empty() {
-            println!("Tree is empty.");
-        } else {
-            println!("!!!SEGTREE!!!");
-            self.print_node(0, 0);
-            //println!("!!!LAZYTREE!!!");
-            //self.print_lazy_node(0, 0);
-        }
-    }
-
-    // Recursive helper function to print each node and its children
-    fn print_node(&self, node_index: usize, depth: usize) {
-        if let Some(node) = self.nodes.get(node_index) {
-            // Print the current node with the label and indentation
-            println!(
-                "{} {} - {}, range = {}-{} pos: {} left: {:?} && right: {:?}",
-                "    ".repeat(depth*2),
-                depth,
-                node.key,
-                node.range.start,
-                node.range.end,
-                node_index,
-                node.id_left,
-                node.id_right
-            );
-
-            // Print the left child with label "Child1" or "GrandchildX" based on depth
-            if let Some(left_index) = node.id_left {
-                self.print_node(left_index , depth + 1);
-            }
-
-            // Print the right child with label "Child2" or "GrandchildX" based on depth
-            if let Some(right_index) = node.id_right {
-                self.print_node(right_index, depth + 1);
-            }
-        }
-    }
-
-    fn print_lazy_node(&self, node_index: usize, depth: usize) {
-        if let Some(node) = self.lazy_nodes[node_index] {
-            // Print the current node with the label and indentation
-            println!(
-                "{}- {:?}, range = {}-{} pos: {} left:{:?} & right:{:?}",
-                "    ".repeat(depth*2),
-                node,
-                self.nodes[node_index].range.start,
-                self.nodes[node_index].range.end,
-                node_index,
-                self.nodes[node_index].id_left,
-                self.nodes[node_index].id_right
-            );
-
-            // Print the left child with label "Child1" or "GrandchildX" based on depth
-            if let Some(left_index) = self.nodes[node_index].id_left {
-                self.print_lazy_node(left_index , depth + 1);
-            }
-
-            // Print the right child with label "Child2" or "GrandchildX" based on depth
-            if let Some(right_index) = self.nodes[node_index].id_right {
-                self.print_lazy_node(right_index, depth + 1);
-            }
-        }
-    }
-    pub fn validate_tree(&self) -> Result<(), String> {
-        for (index, node) in self.nodes.iter().enumerate() {
-            // Validate left child
-            if let Some(left_id) = node.id_left {
-                if left_id >= self.nodes.len() {
-                    return Err(format!(
-                        "Node {}: Left child index {} is out of bounds.",
-                        index, left_id
-                    ));
-                }
-                let left_child = &self.nodes[left_id];
-                if left_child.range.start < node.range.start || left_child.range.end > node.range.end {
-                    return Err(format!(
-                        "Node {}: Left child range {:?}-{:?} is inconsistent with parent range {:?}-{:?}.",
-                        index, left_child.range.start, left_child.range.end, node.range.start, node.range.end
-                    ));
-                }
-            }
-    
-            // Validate right child
-            if let Some(right_id) = node.id_right {
-                if right_id >= self.nodes.len() {
-                    return Err(format!(
-                        "Node {}: Right child index {} is out of bounds.",
-                        index, right_id
-                    ));
-                }
-                let right_child = &self.nodes[right_id];
-                if right_child.range.start < node.range.start || right_child.range.end > node.range.end {
-                    return Err(format!(
-                        "Node {}: Right child range {:?}-{:?} is inconsistent with parent range {:?}-{:?}.",
-                        index, right_child.range.start, right_child.range.end, node.range.start, node.range.end
-                    ));
-                }
-            }
-    
-            // Validate key (optional)
-            let left_key = node.id_left;
-            let right_key = node.id_right;
-            if left_key.is_some() { 
-                if node.key != max(self.nodes[left_key.unwrap()].key, self.nodes[right_key.unwrap()].key) {
-                    return Err(format!(
-                        "Node {}: Key {} does not match the max coming from keys ({} , {}).",
-                        index, node.key, left_key.unwrap(), right_key.unwrap()
-                    ));
-                }
-            }
-        }
-        Ok(())
-    }
 }
 
-
-
-pub struct IsThere{
-    nodes: Vec<RangeNode>,
-    lazy_nodes: Vec<Option<i32>>
+pub struct IsThere {
+    nodes: Vec<URangeNode>,
+    lazy_nodes: Vec<u128>,
 }
 
 fn tree_init_zero(start: usize, end: usize, level: usize) -> Vec<LevelNode> {
     if start == end {
-        return 
-            vec![LevelNode::new(
-                RangeNode::new(0, Range::new(start, end)),
-                level,
-            )];
+        return vec![LevelNode::new(
+            RangeNode::new(1, Range::new(start, end)),
+            level,
+        )];
     }
 
     let mid = (start + end) / 2;
@@ -404,7 +269,7 @@ fn tree_init_zero(start: usize, end: usize, level: usize) -> Vec<LevelNode> {
 
     let mut ret_arr: Vec<LevelNode> = Vec::with_capacity((2 * left_seg_tree.len()) + 1);
     ret_arr.push(LevelNode::new(
-        RangeNode::new(0, Range::new(start, end)),
+        RangeNode::new(1, Range::new(start, end)),
         level,
     ));
     merge(&left_seg_tree, &right_seg_tree, &mut ret_arr);
@@ -412,37 +277,153 @@ fn tree_init_zero(start: usize, end: usize, level: usize) -> Vec<LevelNode> {
     ret_arr
 }
 
+pub struct URangeNode {
+    key: u128,
+    range: Range,
+    id_left: Option<usize>,
+    id_right: Option<usize>,
+}
+
+impl URangeNode {
+    fn new(key: u128, range: Range) -> Self {
+        Self {
+            key,
+            range,
+            id_left: None,
+            id_right: None,
+        }
+    }
+
+    pub fn clone_node(&self) -> URangeNode {
+        URangeNode::new(self.key, Range::new(self.range.start, self.range.end))
+    }
+}
 
 impl IsThere {
-
-    fn new(intervals: i32) -> Self {
-
-        let ranges = tree_init_zero(0, (intervals as usize)-1, 0);
-        let mut lazy_tree: Vec<Option<i32>> = Vec::with_capacity(ranges.len());
-        let mut seg_tree: Vec<RangeNode> = Vec::with_capacity(ranges.len());
+    pub fn new(interval: u128) -> Self {
+        let ranges = tree_init_zero(0, (interval as usize) - 1, 0);
+        let mut lazy_tree: Vec<u128> = Vec::with_capacity(ranges.len());
+        let mut seg_tree: Vec<URangeNode> = Vec::with_capacity(ranges.len());
 
         let mut nonode = 0;
 
         for (i, node) in ranges.iter().enumerate() {
-            let mut new_node = node.range_node.clone_node();
+            let mut new_node = URangeNode::new(
+                1,
+                Range::new(node.range_node.range.start, node.range_node.range.end),
+            );
 
             if new_node.range.end - new_node.range.start == 0 {
                 new_node.id_left = None;
                 new_node.id_right = None;
                 nonode += 1;
             } else {
-                new_node.id_left =  Some(((i - nonode) * 2) + 1);
+                new_node.id_left = Some(((i - nonode) * 2) + 1);
                 new_node.id_right = Some(((i - nonode) * 2) + 2);
             }
 
             seg_tree.push(new_node);
-            lazy_tree.push(None);
+            lazy_tree.push(0);
         }
 
         Self {
             nodes: seg_tree,
             lazy_nodes: lazy_tree,
         }
+    }
 
+    fn update_node(&mut self, node: usize) {
+        if self.lazy_nodes[node] > 0 {
+            self.nodes[node].key = self.nodes[node].key << self.lazy_nodes[node];
+            //println!( "update (node: {}-{}) key: {:b} by {}", self.nodes[node].range.start, self.nodes[node].range.end, self.nodes[node].key, self.lazy_nodes[node]);
+
+            self.propagate(node, self.lazy_nodes[node]);
+            self.lazy_nodes[node] = 0;
+        }
+    }
+
+    fn propagate(&mut self, node: usize, t: u128) {
+        if self.nodes[node].id_left.is_none() {
+            return;
+        }
+
+        let left_id = self.nodes[node].id_left.unwrap();
+        let right_id = self.nodes[node].id_right.unwrap();
+
+        self.lazy_nodes[left_id] += t;
+        self.lazy_nodes[right_id] += t;
+    }
+
+    pub fn query(&mut self, query: usize, i: usize, j: usize, k: u128) -> i8 {
+        let p = 2u128.pow(k as u32);
+        if query == 1 {
+            let ret = self.is_there(i, j, p, 0).unwrap() as i8;
+            //println!("query i:{} j:{} k:{}->{:b} res:{:b}", i, j,k, p, ret);
+            if ret > 0 { return 1; }
+            return 0;
+        }
+
+        //println!("update i:{} j:{} k:{:b}", i, j, 0);
+        return self.update(i, j, 0) as i8;
+    }
+
+    fn is_there(&mut self, start: usize, end: usize, k: u128, node: usize) -> Option<u128> {
+        self.update_node(node);
+
+        if self.nodes[node].range.start > end || self.nodes[node].range.end < start {
+            return None;
+        }
+
+        if self.nodes[node].range.start >= start && self.nodes[node].range.end <= end {
+            return Some(self.nodes[node].key & k);
+        }
+
+        if self.nodes[node].range.start <= start || self.nodes[node].range.end >= end {
+            let left_overlap = self.is_there(start, end, k, self.nodes[node].id_left.unwrap());
+            let right_overlap = self.is_there(start, end, k, self.nodes[node].id_right.unwrap());
+
+            if left_overlap.is_none() && right_overlap.is_none() {
+                return Some(k);
+            }
+
+            if left_overlap.is_none() {
+                return right_overlap;
+            }
+
+            if right_overlap.is_none() {
+                return left_overlap;
+            }
+
+            return Some((right_overlap.unwrap() | left_overlap.unwrap()) & k);
+        }
+
+        None
+    }
+
+    fn update(&mut self, start: usize, end: usize, node: usize) -> u128 {
+        self.update_node(node);
+
+        if self.nodes[node].range.start > end || self.nodes[node].range.end < start {
+            return self.nodes[node].key;
+        }
+
+        if self.nodes[node].range.start >= start && self.nodes[node].range.end <= end {
+            
+            self.nodes[node].key = self.nodes[node].key << 1;
+            //println!( "update node (node: {}-{}) key: {:b}", self.nodes[node].range.start, self.nodes[node].range.end, self.nodes[node].key);
+            self.propagate(node, 1);
+            return self.nodes[node].key;
+        }
+
+        if self.nodes[node].range.start <= start || self.nodes[node].range.end >= end {
+            let left_overlap = self.update(start, end, self.nodes[node].id_left.unwrap());
+            let right_overlap = self.update(start, end, self.nodes[node].id_right.unwrap());
+
+            self.nodes[node].key = right_overlap | left_overlap;
+            //println!( "updated partial (node: {}-{}) key: {:b}", self.nodes[node].range.start, self.nodes[node].range.end, self.nodes[node].key);
+            return self.nodes[node].key;
+        }
+
+        return 0;
     }
 }
