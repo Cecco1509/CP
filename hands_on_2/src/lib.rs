@@ -1,4 +1,4 @@
-use std::{cmp::max, u128};
+use std::cmp::max;
 
 pub struct Range {
     start: usize,
@@ -330,7 +330,7 @@ impl IsThere {
 
     fn update_node(&mut self, node: usize) {
         if self.lazy_nodes[node] > 0 {
-            self.nodes[node].key = self.nodes[node].key << self.lazy_nodes[node];
+            self.nodes[node].key <<= self.lazy_nodes[node];
             //println!( "update (node: {}-{}) key: {:b} by {}", self.nodes[node].range.start, self.nodes[node].range.end, self.nodes[node].key, self.lazy_nodes[node]);
 
             self.propagate(node, self.lazy_nodes[node]);
@@ -362,7 +362,7 @@ impl IsThere {
         }
 
         //println!("update i:{} j:{} k:{:b}", i, j, 0);
-        return self.update(i, j, 0) as i8;
+        self.update(i, j, 0) as i8
     }
 
     fn is_there(&mut self, start: usize, end: usize, k: u128, node: usize) -> Option<u128> {
@@ -406,7 +406,7 @@ impl IsThere {
         }
 
         if self.nodes[node].range.start >= start && self.nodes[node].range.end <= end {
-            self.nodes[node].key = self.nodes[node].key << 1;
+            self.nodes[node].key <<= 1;
             //println!( "update node (node: {}-{}) key: {:b}", self.nodes[node].range.start, self.nodes[node].range.end, self.nodes[node].key);
             self.propagate(node, 1);
             return self.nodes[node].key;
@@ -421,6 +421,6 @@ impl IsThere {
             return self.nodes[node].key;
         }
 
-        return 0;
+        0
     }
 }

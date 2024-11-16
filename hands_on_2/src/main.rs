@@ -193,9 +193,7 @@ fn file_reader_p2(input_path: String, output_path: String) -> io::Result<()> {
             .collect();
 
         let result: i8 = if numbers.len() == 2 {
-            let r = is_there.query(0, numbers[0] as usize, numbers[1] as usize, 0);
-            //is_there.print_tree();
-            r
+            is_there.query(0, numbers[0] as usize, numbers[1] as usize, 0)
         } else {
             is_there.query(
                 1,
