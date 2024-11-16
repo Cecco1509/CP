@@ -36,7 +36,7 @@ fn main() {
         "./testset2/input1.txt".to_string(),
         "./testset2/input2.txt".to_string(),
         "./testset2/input3.txt".to_string(),
-         "./testset2/input4.txt".to_string(),
+        "./testset2/input4.txt".to_string(),
         "./testset2/input5.txt".to_string(),
         "./testset2/input6.txt".to_string(),
         "./testset2/input7.txt".to_string(),
@@ -55,7 +55,6 @@ fn main() {
 
     println!("TESTSET 1");
     for (i, test) in tests1.iter().enumerate() {
-        //println!("\n\n\nTEST {} \n", i);
         match file_reader_p1(test.to_string(), output1[i].to_string()) {
             Ok(_) => println!("Test case {} passed", test),
             Err(e) => println!("Test case {} failed: {}", test, e),
@@ -64,7 +63,6 @@ fn main() {
 
     println!("\nTESTSET 2");
     for (i, test) in tests2.iter().enumerate() {
-        //println!("\n\n\nTEST {} \n", i);
         match file_reader_p2(test.to_string(), output2[i].to_string()) {
             Ok(_) => println!("Test case {} passed", test),
             Err(e) => println!("Test case {} failed: {}", test, e),
@@ -85,12 +83,10 @@ fn file_reader_p1(input_path: String, output_path: String) -> io::Result<()> {
 
     let mut first_line = String::new();
     if input_reader.read_line(&mut first_line)? > 0 {
-        let numbers: Vec<i32> = first_line
+        let _numbers: Vec<i32> = first_line
             .split_whitespace()
             .filter_map(|s| s.parse().ok())
             .collect();
-
-        //println!("First line: {:?}", numbers);
     } else {
         println!("The file is empty or the first line could not be read.");
     }
@@ -103,23 +99,13 @@ fn file_reader_p1(input_path: String, output_path: String) -> io::Result<()> {
             .filter_map(|s| s.parse().ok())
             .collect();
 
-        //println!("Array line: {:?}", numbers);
-        // for i in 0..numbers.len() {
-        //     println!("[{}] -> {}", (i), numbers[i]);
-        // }
         min_max = MinMax::new(numbers);
-        //min_max.print_tree();
-        // match min_max.validate_tree() {
-        //     Ok(_) => println!("Tree is valid!"),
-        //     Err(err) => println!("Tree validation failed: {}", err),
-        // }
     } else {
         println!("The file is empty or the first line could not be read.");
         return Err(Error::last_os_error());
     }
 
-    let mut right : i32 = 0;
-    let mut wrong : i32 = 0;
+    let mut wrong: i32 = 0;
 
     for line in input_reader.lines() {
         let line = line?;
@@ -130,43 +116,39 @@ fn file_reader_p1(input_path: String, output_path: String) -> io::Result<()> {
             .collect();
 
         let result: Option<i32> = if numbers.len() == 3 {
-
-            min_max.query(numbers[0] as usize, numbers[1] as usize, numbers[2] as usize, 0)
-
+            min_max.query(
+                numbers[0] as usize,
+                numbers[1] as usize,
+                numbers[2] as usize,
+                0,
+            )
         } else {
-            min_max.query(numbers[0] as usize, numbers[1] as usize, numbers[2] as usize, numbers[3])
+            min_max.query(
+                numbers[0] as usize,
+                numbers[1] as usize,
+                numbers[2] as usize,
+                numbers[3],
+            )
         };
 
-        if numbers.len() == 4 {
-            // println!(
-            //     "update: % ## range: {} - {} ## T: {}",
-            //     numbers[1], numbers[2], numbers[3]
-            // );
-
-        } else {
-
+        if numbers.len() == 3 {
             let mut output = String::new();
             let _ = output_reader.read_line(&mut output);
             let success: i32 = output.trim().parse().ok().unwrap();
 
-            if success == result.unwrap() {
-                right += 1;
-            }else {
+            if success != result.unwrap() {
                 wrong += 1;
                 println!(
-                "max   : {:?} ## range: {} - {}     ######### ( {} ) ######## -> {}",
-                    result, numbers[1], numbers[2], (success == result.unwrap()), success
+                    "max   : {:?} ## range: {} - {}     ######### ( {} ) ######## -> {}",
+                    result,
+                    numbers[1],
+                    numbers[2],
+                    (success == result.unwrap()),
+                    success
                 )
             }
-
-            // println!(
-            //     "max   : {:?} ## range: {} - {}     ######### ( {} ) ######## -> {}",
-            //     result, numbers[1], numbers[2], (success == result.unwrap()), success
-            // )
         }
     }
-
-    //println!("TOT: {} right: {}, wrong: {}\n", right+wrong, right, wrong);
 
     if wrong > 0 {
         return Err(Error::new(io::ErrorKind::Other, "Test case failed"));
@@ -200,7 +182,6 @@ fn file_reader_p2(input_path: String, output_path: String) -> io::Result<()> {
         return Err(Error::last_os_error());
     }
 
-    let mut right: i32 = 0;
     let mut wrong: i32 = 0;
 
     for line in input_reader.lines() {
@@ -212,7 +193,7 @@ fn file_reader_p2(input_path: String, output_path: String) -> io::Result<()> {
             .collect();
 
         let result: i8 = if numbers.len() == 2 {
-            let r= is_there.query(0, numbers[0] as usize, numbers[1] as usize, 0);
+            let r = is_there.query(0, numbers[0] as usize, numbers[1] as usize, 0);
             //is_there.print_tree();
             r
         } else {
@@ -224,42 +205,24 @@ fn file_reader_p2(input_path: String, output_path: String) -> io::Result<()> {
             )
         };
 
-        if numbers.len() == 2 {
-            // println!(
-            //     "update: % ## range: {} - {} ## T: {}",
-            //     numbers[1], numbers[2], numbers[3]
-            // );
-        } else {
+        if numbers.len() == 3 {
             let mut output = String::new();
             let _ = output_reader.read_line(&mut output);
             let success: i8 = output.trim().parse().ok().unwrap();
 
-            if success == result {
-                right += 1;
-            } else {
+            if success != result {
                 wrong += 1;
                 println!(
                     "max   : {:?} ## range: {} - {}     ######### ( FALSE ) ######## -> {}",
                     result, numbers[0], numbers[1], success
                 )
             }
-
-            // println!(
-            //     "max   : {:?} ## range: {} - {}     ######### ( {} ) ######## -> {}",
-            //     result, numbers[1], numbers[2], (success == result.unwrap()), success
-            // )
         }
     }
-
-    // println!(
-    //     "TOT: {} right: {}, wrong: {}\n",
-    //     right + wrong,
-    //     right,
-    //     wrong
-    // );
 
     if wrong > 0 {
         return Err(Error::new(io::ErrorKind::Other, "Test case failed"));
     }
+
     Ok(())
 }

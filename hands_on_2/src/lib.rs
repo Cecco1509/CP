@@ -1,7 +1,4 @@
-use std::{
-    cmp::max,
-    u128,
-};
+use std::{cmp::max, u128};
 
 pub struct Range {
     start: usize,
@@ -247,7 +244,6 @@ impl MinMax {
 
         None
     }
-
 }
 
 pub struct IsThere {
@@ -359,7 +355,9 @@ impl IsThere {
         if query == 1 {
             let ret = self.is_there(i, j, p, 0).unwrap() as i8;
             //println!("query i:{} j:{} k:{}->{:b} res:{:b}", i, j,k, p, ret);
-            if ret > 0 { return 1; }
+            if ret > 0 {
+                return 1;
+            }
             return 0;
         }
 
@@ -408,7 +406,6 @@ impl IsThere {
         }
 
         if self.nodes[node].range.start >= start && self.nodes[node].range.end <= end {
-            
             self.nodes[node].key = self.nodes[node].key << 1;
             //println!( "update node (node: {}-{}) key: {:b}", self.nodes[node].range.start, self.nodes[node].range.end, self.nodes[node].key);
             self.propagate(node, 1);
