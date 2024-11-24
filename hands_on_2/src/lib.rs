@@ -1,4 +1,3 @@
-use std::cmp::max;
 
 pub struct Range {
     start: usize,
@@ -68,16 +67,16 @@ fn tree_init(arr: &Vec<i32>, start: usize, end: usize, level: usize) -> (Vec<Lev
     }
 
     let mid = (start + end) / 2;
-    let (left_seg_tree, left_max) = tree_init(arr, start, mid, level + 1);
-    let (right_seg_tree, right_max) = tree_init(arr, mid + 1, end, level + 1);
-    let maximum = max(left_max, right_max);
+    let (left_nodes, left_max) = tree_init(arr, start, mid, level + 1);
+    let (right_nodes, right_max) = tree_init(arr, mid + 1, end, level + 1);
+    let maximum: i32 = i32::max(left_max, right_max);
 
-    let mut ret_arr: Vec<LevelNode> = Vec::with_capacity((2 * left_seg_tree.len()) + 1);
+    let mut ret_arr: Vec<LevelNode> = Vec::with_capacity((left_nodes.len() + right_nodes.len()) + 1);
     ret_arr.push(LevelNode::new(
         RangeNode::new(maximum, Range::new(start, end)),
         level,
     ));
-    merge(&left_seg_tree, &right_seg_tree, &mut ret_arr);
+    merge(&left_nodes, &right_nodes, &mut ret_arr);
 
     (ret_arr, maximum)
 }
@@ -96,19 +95,12 @@ fn merge(left: &[LevelNode], right: &[LevelNode], merged_arr: &mut Vec<LevelNode
         }
     }
 
-    while i < left.len() {
-        merged_arr.push(left[i].clone_node());
-        i += 1;
-    }
-
-    while j < right.len() {
-        merged_arr.push(right[j].clone_node());
-        j += 1;
-    }
+    merged_arr.extend(left[i..].iter().map(LevelNode::clone_node));
+    merged_arr.extend(right[j..].iter().map(LevelNode::clone_node));
 }
 
 impl MinMax {
-    /* Complexity = O(n log n) used merge sort to build the tree merge sort*/
+    /* Complexity = O(n log n) used merge sort to build the segment tree*/
     pub fn new(arr: Vec<i32>) -> Self {
         let (ranges, _) = tree_init(&arr, 0, arr.len() - 1, 0);
         let mut lazy_tree: Vec<Option<i32>> = Vec::with_capacity(ranges.len());
@@ -331,7 +323,6 @@ impl IsThere {
     fn update_node(&mut self, node: usize) {
         if self.lazy_nodes[node] > 0 {
             self.nodes[node].key <<= self.lazy_nodes[node];
-            //println!( "update (node: {}-{}) key: {:b} by {}", self.nodes[node].range.start, self.nodes[node].range.end, self.nodes[node].key, self.lazy_nodes[node]);
 
             self.propagate(node, self.lazy_nodes[node]);
             self.lazy_nodes[node] = 0;
@@ -353,49 +344,36 @@ impl IsThere {
     pub fn query(&mut self, query: usize, i: usize, j: usize, k: u128) -> i8 {
         let p = 2u128.pow(k as u32);
         if query == 1 {
-            let ret = self.is_there(i, j, p, 0).unwrap() as i8;
-            //println!("query i:{} j:{} k:{}->{:b} res:{:b}", i, j,k, p, ret);
+            let ret = self.is_there(i, j, p, 0) as i8;
+
             if ret > 0 {
                 return 1;
             }
             return 0;
         }
 
-        //println!("update i:{} j:{} k:{:b}", i, j, 0);
         self.update(i, j, 0) as i8
     }
 
-    fn is_there(&mut self, start: usize, end: usize, k: u128, node: usize) -> Option<u128> {
+    fn is_there(&mut self, start: usize, end: usize, k: u128, node: usize) -> u128 {
         self.update_node(node);
 
         if self.nodes[node].range.start > end || self.nodes[node].range.end < start {
-            return None;
+            return 0;
         }
 
         if self.nodes[node].range.start >= start && self.nodes[node].range.end <= end {
-            return Some(self.nodes[node].key & k);
+            return self.nodes[node].key & k;
         }
 
         if self.nodes[node].range.start <= start || self.nodes[node].range.end >= end {
             let left_overlap = self.is_there(start, end, k, self.nodes[node].id_left.unwrap());
             let right_overlap = self.is_there(start, end, k, self.nodes[node].id_right.unwrap());
 
-            if left_overlap.is_none() && right_overlap.is_none() {
-                return Some(k);
-            }
-
-            if left_overlap.is_none() {
-                return right_overlap;
-            }
-
-            if right_overlap.is_none() {
-                return left_overlap;
-            }
-
-            return Some((right_overlap.unwrap() | left_overlap.unwrap()) & k);
+            return right_overlap | left_overlap;
         }
 
-        None
+        0
     }
 
     fn update(&mut self, start: usize, end: usize, node: usize) -> u128 {
@@ -407,7 +385,6 @@ impl IsThere {
 
         if self.nodes[node].range.start >= start && self.nodes[node].range.end <= end {
             self.nodes[node].key <<= 1;
-            //println!( "update node (node: {}-{}) key: {:b}", self.nodes[node].range.start, self.nodes[node].range.end, self.nodes[node].key);
             self.propagate(node, 1);
             return self.nodes[node].key;
         }
@@ -417,7 +394,6 @@ impl IsThere {
             let right_overlap = self.update(start, end, self.nodes[node].id_right.unwrap());
 
             self.nodes[node].key = right_overlap | left_overlap;
-            //println!( "updated partial (node: {}-{}) key: {:b}", self.nodes[node].range.start, self.nodes[node].range.end, self.nodes[node].key);
             return self.nodes[node].key;
         }
 

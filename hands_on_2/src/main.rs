@@ -89,6 +89,7 @@ fn file_reader_p1(input_path: String, output_path: String) -> io::Result<()> {
             .collect();
     } else {
         println!("The file is empty or the first line could not be read.");
+        return Err(Error::last_os_error());
     }
 
     let mut second_line = String::new();
@@ -175,7 +176,6 @@ fn file_reader_p2(input_path: String, output_path: String) -> io::Result<()> {
             .filter_map(|s| s.parse().ok())
             .collect();
 
-        //println!("Interval: {}", numbers[0]);
         is_there = IsThere::new(numbers[0] as u128);
     } else {
         println!("The file is empty or the first line could not be read.");
