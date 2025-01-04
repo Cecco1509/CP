@@ -38,6 +38,74 @@ pub fn find_maximum_attractions(n: usize, k: usize, attractions: Vec<Vec<u32>>) 
     matrix[rows - 1][columns - 1]
 }
 
+pub fn find_maximum_attractions_opt(n: usize, k: usize, attractions: Vec<Vec<u32>>) -> u32 {
+    let rows: usize = 2;
+    let columns: usize = k + 1;
+
+    let mut matrix: Vec<Vec<u32>> = vec![vec![0; columns]; rows];
+
+    println!("rows: {}, columns: {}", rows, columns);
+    for i in 0..(columns - 1) {
+        matrix[0][i+1] = matrix[0][i] + attractions[0][i];
+    }
+
+    println!("{:?}", matrix);
+
+    // City
+    for i in 1..n {
+
+        let mut current_value: u32 = 0;
+
+        let mut delta: i8 = - 1;
+
+        // Attractions weight
+        for j in 0..k {
+            //println!("{} ", attractions[i][j]);
+
+            // Attraction current value
+            current_value += attractions[i][j];
+
+            println!("current_value: {} c: {} w: {}", current_value, i, j);
+
+
+            /* create an example matrix
+
+                j
+              l 0 3 5
+            
+            */
+
+            // Weight
+            let current_row = if delta < 0 { 1 } else { 0 };
+
+            for l in 1..(k+1) {
+                //println!("j: {} l: {}", j, l);
+                
+                if j+1 <= l {
+                    println!("comparison: {} - {} pos: {} curr: {} ", current_value + matrix[(current_row + delta) as usize][l-(j+1)], matrix[(current_row + delta) as usize][l], l-(j+1), current_value);
+                    println!("delta: {} current_row: {}", delta, current_row);
+                    println!("matrix: {:?}", matrix);
+                    matrix[(current_row + delta) as usize][l] = u32::max(
+                        current_value + matrix[(current_row + delta) as usize][l-(j+1)],
+                        matrix[(current_row + delta) as usize][l],
+                    );
+                }else {
+                    matrix[(current_row) as usize][l] = matrix[(current_row + delta) as usize][l];
+                }
+            }
+
+            delta -= 2*delta;
+
+        }
+
+        println!("{:?}", matrix);
+
+    }
+
+    matrix[1][k]
+}
+
+
 #[cfg(test)]
 mod part1_tests {
     use super::*;
@@ -125,7 +193,7 @@ mod part1_tests {
             vec![3, 1, 0, 3],
         ];
 
-        let result: u32 = find_maximum_attractions(n, d, attractions);
+        let result: u32 = find_maximum_attractions_opt(n, d, attractions);
 
         assert_eq!(result, 14);
     }
