@@ -1,113 +1,48 @@
-pub fn find_maximum_attractions(n: usize, k: usize, attractions: Vec<Vec<u32>>) -> u32 {
-    let rows: usize = ((n - 1) * k) + 1; // this could be optimized to k + 1
-    let columns: usize = k + 1;
-
-    let mut matrix: Vec<Vec<u32>> = vec![vec![0; columns]; rows];
-
-    println!("rows: {}, columns: {}", rows, columns);
-    for j in 0..(columns - 1) {
-        matrix[0][j + 1] = attractions[0][j];
-    }
-
-    let mut current_city: usize = 1;
-    let mut current_weight: usize = 1;
-    let mut current_value: u32 = 0;
-
-    for i in 1..(rows) {
-        current_value += attractions[current_city][current_weight - 1];
-
-        for j in 1..(columns) {
-            if j < current_weight {
-                matrix[i][j] = matrix[i - 1][j];
-            } else {
-                matrix[i][j] = u32::max(
-                    current_value + matrix[i - current_weight][j - current_weight],
-                    matrix[i - 1][j],
-                );
-            }
-        }
-
-        current_weight += 1;
-        if current_weight > k {
-            current_weight = 1;
-            current_city += 1;
-            current_value = 0;
-        }
-    }
-
-    matrix[rows - 1][columns - 1]
-}
-
 pub fn find_maximum_attractions_opt(n: usize, k: usize, attractions: Vec<Vec<u32>>) -> u32 {
     let rows: usize = 2;
     let columns: usize = k + 1;
 
     let mut matrix: Vec<Vec<u32>> = vec![vec![0; columns]; rows];
 
-    println!("rows: {}, columns: {}", rows, columns);
     for i in 0..(columns - 1) {
-        matrix[0][i+1] = matrix[0][i] + attractions[0][i];
+        matrix[0][i + 1] = matrix[0][i] + attractions[0][i];
     }
-
-    println!("{:?}", matrix);
 
     // City
-    for i in 1..n {
-
+    for (i, itinerary) in attractions.iter().enumerate().take(n).skip(1) {
         let mut current_value: u32 = 0;
 
-        let mut delta: i8 = - 1;
+        let (current_row, compare_row): (usize, usize) = if i % 2 != 0 { (1, 0) } else { (0, 1) };
 
-        // Attractions weight
-        for j in 0..k {
-            //println!("{} ", attractions[i][j]);
+        // Attractions per day
+        for (j, dayly_attractions) in itinerary.iter().enumerate().take(k) {
+            current_value += dayly_attractions;
 
-            // Attraction current value
-            current_value += attractions[i][j];
-
-            println!("current_value: {} c: {} w: {}", current_value, i, j);
-
-
-            /* create an example matrix
-
-                j
-              l 0 3 5
-            
-            */
-
-            // Weight
-            let current_row = if delta < 0 { 1 } else { 0 };
-
-            for l in 1..(k+1) {
-                //println!("j: {} l: {}", j, l);
-                
-                if j+1 <= l {
-                    println!("comparison: {} - {} pos: {} curr: {} ", current_value + matrix[(current_row + delta) as usize][l-(j+1)], matrix[(current_row + delta) as usize][l], l-(j+1), current_value);
-                    println!("delta: {} current_row: {}", delta, current_row);
-                    println!("matrix: {:?}", matrix);
-                    matrix[(current_row + delta) as usize][l] = u32::max(
-                        current_value + matrix[(current_row + delta) as usize][l-(j+1)],
-                        matrix[(current_row + delta) as usize][l],
-                    );
-                }else {
-                    matrix[(current_row) as usize][l] = matrix[(current_row + delta) as usize][l];
+            for l in 1..(k + 1) {
+                if j < l {
+                    if j == 0 {
+                        matrix[current_row][l] = u32::max(
+                            current_value + matrix[compare_row][l - (j + 1)],
+                            matrix[compare_row][l],
+                        );
+                    } else {
+                        matrix[current_row][l] = u32::max(
+                            current_value + matrix[compare_row][l - (j + 1)],
+                            matrix[current_row][l],
+                        );
+                    }
+                } else if j == 0 {
+                    matrix[current_row][l] = matrix[compare_row][l];
                 }
             }
-
-            delta -= 2*delta;
-
         }
-
-        println!("{:?}", matrix);
-
     }
 
-    matrix[1][k]
+    matrix[(n - 1) % 2][k]
 }
 
-
 #[cfg(test)]
-mod part1_tests {
+mod part1opt_tests {
     use super::*;
 
     #[test]
@@ -137,7 +72,7 @@ mod part1_tests {
             vec![5, 1, 4, 4, 3, 2, 4, 5],
         ];
 
-        let result: u32 = find_maximum_attractions(n, d, attractions);
+        let result: u32 = find_maximum_attractions_opt(n, d, attractions);
 
         assert_eq!(result, 32);
     }
@@ -163,7 +98,7 @@ mod part1_tests {
             vec![2, 1, 4, 5, 1],
         ];
 
-        let result: u32 = find_maximum_attractions(n, d, attractions);
+        let result: u32 = find_maximum_attractions_opt(n, d, attractions);
 
         assert_eq!(result, 19);
     }
@@ -217,7 +152,7 @@ mod part1_tests {
             vec![0, 1, 1, 0, 0, 1, 2, 2, 1, 1, 1, 1, 2, 2, 1],
         ];
 
-        let result: u32 = find_maximum_attractions(n, d, attractions);
+        let result: u32 = find_maximum_attractions_opt(n, d, attractions);
 
         assert_eq!(result, 16);
     }
@@ -257,7 +192,7 @@ mod part1_tests {
             vec![4, 0, 0, 0, 0, 0, 0, 0, 0, 3],
         ];
 
-        let result: u32 = find_maximum_attractions(n, d, attractions);
+        let result: u32 = find_maximum_attractions_opt(n, d, attractions);
 
         assert_eq!(result, 21);
     }
