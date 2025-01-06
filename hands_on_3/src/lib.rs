@@ -28,6 +28,7 @@ pub fn find_maximum_attractions(n: usize, k: usize, attractions: Vec<Vec<u32>>) 
         }
 
         // compare the other attractions of the current city with the values in the current row
+        // but still using the previous cities values
         for (j, dayly_attractions) in itinerary.iter().enumerate().skip(1) {
             current_value += dayly_attractions;
 
@@ -43,6 +44,44 @@ pub fn find_maximum_attractions(n: usize, k: usize, attractions: Vec<Vec<u32>>) 
     }
 
     matrix[(n - 1) % 2][k]
+}
+
+// PART 2
+pub fn find_maximum_topics(mut topics: Vec<(u32, u32)>) -> u32 {
+
+    // Sort by beauty
+    topics.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let mut bst = vec![(topics[0].1, 0 as usize)];
+
+    // Find the LIS in the difficulty column
+    for (i, topic) in topics.iter().enumerate().skip(1) {
+
+        let last = bst.last().unwrap();
+        
+        if topic.1 > last.0 && topic.0 != topics[last.1].0 {
+            bst.push((topic.1, i));
+        } else {
+            let mut left = 0;
+            let mut right = bst.len() - 1;
+
+            while left < right {
+                let mid = left + (right - left) / 2;
+
+                if bst[mid].0 < topic.1 {
+                    left = mid + 1;
+                } else {
+                    right = mid;
+                }
+            }
+
+            bst[left].0 = topic.1;
+            bst[left].1 = i;
+        }
+
+    }
+
+    bst.len() as u32
 }
 
 #[cfg(test)]
@@ -200,44 +239,6 @@ mod part1_tests {
 
         assert_eq!(result, 21);
     }
-}
-
-// PART 2
-pub fn find_maximum_topics(mut topics: Vec<(u32, u32)>) -> u32 {
-
-    // Sort by beauty
-    topics.sort_by(|a, b| a.0.cmp(&b.0));
-
-    let mut bst = vec![(topics[0].1, 0 as usize)];
-
-    // Find the LIS in the difficulty column
-    for (i, topic) in topics.iter().enumerate().skip(1) {
-
-        let last = bst.last().unwrap();
-        
-        if topic.1 > last.0 && topic.0 != topics[last.1].0 {
-            bst.push((topic.1, i));
-        } else {
-            let mut left = 0;
-            let mut right = bst.len() - 1;
-
-            while left < right {
-                let mid = left + (right - left) / 2;
-
-                if bst[mid].0 < topic.1 {
-                    left = mid + 1;
-                } else {
-                    right = mid;
-                }
-            }
-
-            bst[left].0 = topic.1;
-            bst[left].1 = i;
-        }
-
-    }
-
-    bst.len() as u32
 }
 
 #[cfg(test)]
