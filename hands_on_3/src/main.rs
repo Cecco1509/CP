@@ -1,4 +1,4 @@
-use hands_on_3::find_maximum_attractions_opt;
+use hands_on_3::find_maximum_attractions;
 
 fn main() {
     /*
@@ -24,7 +24,7 @@ fn main() {
         vec![3, 1, 0, 3],
     ];
 
-    let result: u32 = find_maximum_attractions_opt(n, d, attractions);
+    let result: u32 = find_maximum_attractions(n, d, attractions);
 
     println!("{}", result);
 }

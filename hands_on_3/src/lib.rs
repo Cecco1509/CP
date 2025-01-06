@@ -1,43 +1,42 @@
 // PART 1
-pub fn find_maximum_attractions_opt(n: usize, k: usize, attractions: Vec<Vec<u32>>) -> u32 {
+pub fn find_maximum_attractions(n: usize, k: usize, attractions: Vec<Vec<u32>>) -> u32 {
+
+    // I need only two rows to compute the result, one for the current city and one for the previous ones
+    // I swap the rows to avoid copying the values
     let rows: usize = 2;
     let columns: usize = k + 1;
 
     let mut matrix: Vec<Vec<u32>> = vec![vec![0; columns]; rows];
 
+    // Inizialize the first row to the first city itinerary
     for i in 0..(columns - 1) {
         matrix[0][i + 1] = matrix[0][i] + attractions[0][i];
     }
 
-    // City
+    // Loop through the cities except the first one
     for (i, itinerary) in attractions.iter().enumerate().skip(1) {
-        let mut current_value: u32 = 0;
+        let mut current_value: u32 = itinerary[0];
 
         let (current_row, compare_row): (usize, usize) = if i % 2 != 0 { (1, 0) } else { (0, 1) };
 
-        // Attractions per day
-        for (j, dayly_attractions) in itinerary.iter().enumerate() {
+        // compare the first attraction of the current city with the previous cities
+        for l in 1..(k + 1) {
+            matrix[current_row][l] = u32::max(
+                current_value + matrix[compare_row][l - 1],
+                matrix[compare_row][l],
+            );
+        }
+
+        // compare the other attractions of the current city with the values in the current row
+        for (j, dayly_attractions) in itinerary.iter().enumerate().skip(1) {
             current_value += dayly_attractions;
-
-            if j == 0 {
-
-            }
 
             for l in 1..(k + 1) {
                 if j < l {
-                    if j == 0 {
-                        matrix[current_row][l] = u32::max(
-                            current_value + matrix[compare_row][l - (j + 1)],
-                            matrix[compare_row][l],
-                        );
-                    } else {
-                        matrix[current_row][l] = u32::max(
-                            current_value + matrix[compare_row][l - (j + 1)],
-                            matrix[current_row][l],
-                        );
-                    }
-                } else if j == 0 {
-                    matrix[current_row][l] = matrix[compare_row][l];
+                    matrix[current_row][l] = u32::max(
+                        current_value + matrix[compare_row][l - (j + 1)],
+                        matrix[current_row][l],
+                    );
                 }
             }
         }
@@ -77,7 +76,7 @@ mod part1_tests {
             vec![5, 1, 4, 4, 3, 2, 4, 5],
         ];
 
-        let result: u32 = find_maximum_attractions_opt(n, d, attractions);
+        let result: u32 = find_maximum_attractions(n, d, attractions);
 
         assert_eq!(result, 32);
     }
@@ -103,7 +102,7 @@ mod part1_tests {
             vec![2, 1, 4, 5, 1],
         ];
 
-        let result: u32 = find_maximum_attractions_opt(n, d, attractions);
+        let result: u32 = find_maximum_attractions(n, d, attractions);
 
         assert_eq!(result, 19);
     }
@@ -133,7 +132,7 @@ mod part1_tests {
             vec![3, 1, 0, 3],
         ];
 
-        let result: u32 = find_maximum_attractions_opt(n, d, attractions);
+        let result: u32 = find_maximum_attractions(n, d, attractions);
 
         assert_eq!(result, 14);
     }
@@ -157,7 +156,7 @@ mod part1_tests {
             vec![0, 1, 1, 0, 0, 1, 2, 2, 1, 1, 1, 1, 2, 2, 1],
         ];
 
-        let result: u32 = find_maximum_attractions_opt(n, d, attractions);
+        let result: u32 = find_maximum_attractions(n, d, attractions);
 
         assert_eq!(result, 16);
     }
@@ -197,14 +196,14 @@ mod part1_tests {
             vec![4, 0, 0, 0, 0, 0, 0, 0, 0, 3],
         ];
 
-        let result: u32 = find_maximum_attractions_opt(n, d, attractions);
+        let result: u32 = find_maximum_attractions(n, d, attractions);
 
         assert_eq!(result, 21);
     }
 }
 
 // PART 2
-pub fn find_maximum_topics_opt(mut topics: Vec<(u32, u32)>) -> u32 {
+pub fn find_maximum_topics(mut topics: Vec<(u32, u32)>) -> u32 {
 
     // Sort by beauty
     topics.sort_by(|a, b| a.0.cmp(&b.0));
@@ -262,7 +261,7 @@ mod part2_tests {
 
         let topics: Vec<(u32, u32)> = vec![(0, 3), (99, 1), (11, 20), (1, 2), (10, 5)];
 
-        let result: u32 = find_maximum_topics_opt(topics);
+        let result: u32 = find_maximum_topics(topics);
 
         assert_eq!(result, 3);
     }
@@ -287,7 +286,7 @@ mod part2_tests {
             (10, 8),
         ];
 
-        let result: u32 = find_maximum_topics_opt(topics);
+        let result: u32 = find_maximum_topics(topics);
 
         assert_eq!(result, 3);
     }
@@ -309,7 +308,7 @@ mod part2_tests {
             (3, 3),
         ];
 
-        let result: u32 = find_maximum_topics_opt(topics);
+        let result: u32 = find_maximum_topics(topics);
 
         assert_eq!(result, 1);
     }
@@ -319,7 +318,7 @@ mod part2_tests {
 
         let topics: Vec<(u32, u32)> = vec![(44, 49),(15, 35),(38, 21),(55, 93),(14, 29),(50, 52),(94, 76),(89, 84),(30, 96),(41, 14),(17, 38),(30, 14),(21, 100),(12, 78),(86, 87)];
 
-        let result: u32 = find_maximum_topics_opt(topics);
+        let result: u32 = find_maximum_topics(topics);
 
         assert_eq!(result, 6);
     }
@@ -330,7 +329,7 @@ mod part2_tests {
         let topics: Vec<(u32, u32)> = vec![(54, 56),(66, 50),(74, 97),(52, 23),(62, 74),(27, 56),(73, 24),(11, 47),(32, 83),(51, 29),(12, 74),(4, 48),(51, 22),(82, 82),(1, 24),
         ];
 
-        let result: u32 = find_maximum_topics_opt(topics);
+        let result: u32 = find_maximum_topics(topics);
 
         assert_eq!(result, 5);
     }
@@ -341,7 +340,7 @@ mod part2_tests {
         let topics: Vec<(u32, u32)> = vec![(56, 90),(61, 30),(82, 62),(60, 44),(72, 58),(20, 80),(46, 79),(39, 15),(67, 46),(64, 63),(72, 9),
         ];
 
-        let result: u32 = find_maximum_topics_opt(topics);
+        let result: u32 = find_maximum_topics(topics);
 
         assert_eq!(result, 5);
     }
@@ -351,7 +350,7 @@ mod part2_tests {
         let topics: Vec<(u32, u32)> = vec![(64, 56),(51, 51),(61, 74),(88, 53),(1, 15),(50, 81),(43, 24),(53, 78),(6, 34),(33, 46),(27, 1),(9, 37),(18, 47),(38, 21),(69, 95),
         ];
 
-        let result: u32 = find_maximum_topics_opt(topics);
+        let result: u32 = find_maximum_topics(topics);
 
         assert_eq!(result, 7);
 
@@ -363,7 +362,7 @@ mod part2_tests {
         let topics: Vec<(u32, u32)> = vec![(64, 56),(51, 51),(61, 74),(88, 53),(1, 15),(50, 81),(43, 24),(53, 78),(6, 34),(33, 46),(27, 1),(9, 37),(18, 47),(38, 21),(69, 95),
         ];
 
-        let result: u32 = find_maximum_topics_opt(topics);
+        let result: u32 = find_maximum_topics(topics);
 
         assert_eq!(result, 7);
 
@@ -375,7 +374,7 @@ mod part2_tests {
         let topics: Vec<(u32, u32)> = vec![(33, 5),(52, 5),(33, 54),(80, 11),(12, 78),(62, 2),(17, 1),(66, 79),(94, 30),(54, 14),(28, 17),(100, 70),
         ];
 
-        let result: u32 = find_maximum_topics_opt(topics);
+        let result: u32 = find_maximum_topics(topics);
 
         assert_eq!(result, 5);
 
@@ -387,7 +386,7 @@ mod part2_tests {
         let topics: Vec<(u32, u32)> = vec![(80, 88),(7, 62),(60, 14),(27, 60),(95, 66),(68, 71),(10, 76),(14, 87),(6, 92),(81, 81),(80, 90),
         ];
 
-        let result: u32 = find_maximum_topics_opt(topics);
+        let result: u32 = find_maximum_topics(topics);
 
         assert_eq!(result, 4);
 
@@ -399,7 +398,7 @@ mod part2_tests {
         let topics: Vec<(u32, u32)> = vec![(30, 73),(4, 89),(66, 60),(61, 22),(30, 16),(94, 60),(27, 87),(75, 8),(91, 33),(69, 78),(41, 69),(70, 12),(88, 76),(91, 92)
         ];
 
-        let result: u32 = find_maximum_topics_opt(topics);
+        let result: u32 = find_maximum_topics(topics);
 
         assert_eq!(result, 5);
 
