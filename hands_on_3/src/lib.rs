@@ -490,21 +490,4 @@ mod part2_tests {
 
         assert_eq!(result, 5);
     }
-    /*
-        #[test]
-        fn test_gpt() {
-
-            let topics: Vec<(u32, u32)> = vec![
-            (0, 0), (1, 1), (2, 1), (3, 2), (4, 2),
-            (5, 3), (6, 3), (7, 4), (8, 4), (9, 5),
-            (10, 6), (11, 6), (12, 7), (13, 7), (14, 8),
-            (15, 9), (16, 9), (17, 10), (18, 10), (19, 11)
-            ];
-
-            let result: u32 = find_maximum_topics(topics);
-
-            assert_eq!(result, 12);
-
-        }
-    */
 }
